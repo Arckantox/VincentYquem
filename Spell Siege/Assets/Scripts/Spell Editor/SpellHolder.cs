@@ -28,7 +28,12 @@ public class SpellHolder : MonoBehaviour {
         {
             SaveSpell(0, Socketing._socketing._MinorGems);
         }
-	}
+    }
+
+    public void SaveSpell1()
+    {
+        SaveSpell(0, Socketing._socketing._MinorGems);
+    }
 
     public void SaveSpell(int index, MinorGem[] tabMinGems)
     {

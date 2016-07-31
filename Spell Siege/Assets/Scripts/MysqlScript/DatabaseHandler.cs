@@ -204,8 +204,7 @@ public class DatabaseHandler : MonoBehaviour
         string checkPass;
         if (con.State.ToString() == "Open")
         {
-            cmd = new MySqlCommand("SELECT passusers FROM users WHERE nameusers='" + name +"';", con);
-
+            cmd = new MySqlCommand("SELECT nameusers FROM users WHERE nameusers='" + userName + "';", con);
             try
             {
                 rdr = cmd.ExecuteReader();
@@ -213,19 +212,19 @@ public class DatabaseHandler : MonoBehaviour
             catch (Exception e)
             {
                 Debug.Log(e);
-                //test
-                _errortxt.text = e.ToString();
             }
-
             rdr.Read();
-
-            checkPass = rdr.GetString("passusers");
-
-            rdr.Close();
-
-            if (checkPass == pass)
+            if (!rdr.HasRows) // Vérifie si il y a eu une réponse valide pour la recherche du nom entré, nom existe
             {
-                cmd = new MySqlCommand("SELECT nameusers FROM users WHERE nameusers='" + name + "';", con);
+                _errortxt.text = "Wrong User/Password";
+                rdr.Close();
+                return;
+            }
+            else // Nom existant, donc vérification du MDP entré
+            {
+                rdr.Close();
+                cmd = new MySqlCommand("SELECT passusers FROM users WHERE nameusers='" + name + "';", con);
+
                 try
                 {
                     rdr = cmd.ExecuteReader();
@@ -233,27 +232,52 @@ public class DatabaseHandler : MonoBehaviour
                 catch (Exception e)
                 {
                     Debug.Log(e);
+                    //test
+                    _errortxt.text = e.ToString();
                 }
+
                 rdr.Read();
 
-                myUserName = rdr.GetString("nameusers");
+                checkPass = rdr.GetString("passusers");
+
                 rdr.Close();
-                myID = GetMyID();
-                myID = GetMyID();
-                Debug.Log("Connected as : " + myUserName + " | ID : " + myID);
-                //test
-                _errortxt.text = "Connected as : " + myUserName + " | ID : " + myID;
 
-               ShowHideConnectUserGUI();
-                ShowHideCreateUserGUI();
+                if (checkPass == pass)
+                {
+                    cmd = new MySqlCommand("SELECT nameusers FROM users WHERE nameusers='" + name + "';", con);
+                    try
+                    {
+                        rdr.Close();
+                        rdr = cmd.ExecuteReader();
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                    }
+                    rdr.Read();
 
+                    myUserName = rdr.GetString("nameusers");
+                    rdr.Close();
+                    myID = GetMyID();
+                    myID = GetMyID();
+                    Debug.Log("Connected as : " + myUserName + " | ID : " + myID);
+                    //test
+                    _errortxt.text = "Connected as : " + myUserName + " | ID : " + myID;
+
+                    ShowHideConnectUserGUI();
+                    ShowHideCreateUserGUI();
+
+                }
+                else
+                {
+                    Debug.Log("Wrong User/Password");
+                    //test
+                    _errortxt.text = "Wrong User/Password";
+                }
             }
-            else
-            {
-                Debug.Log("Wrong User/Password");
-                //test
-                _errortxt.text = "Wrong User/Password";
-            }
+
+
+            
         }
         else
         {
@@ -267,23 +291,47 @@ public class DatabaseHandler : MonoBehaviour
     {
         if(con.State.ToString() == "Open")
         {
-            cmd = new MySqlCommand("INSERT INTO users VALUES(default,'" + userName + "','" + userPass + "',default, default)", con);
+            //Check if name entered already exist
+
+            cmd = new MySqlCommand("SELECT nameusers FROM users WHERE nameusers='" + name + "';", con);
             try
             {
                 rdr = cmd.ExecuteReader();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.Log(e);
             }
-            rdr.Close();
-            Debug.Log("Created account : " + userName + " | Password : " + userPass);
-            myUserName = userName;
+            rdr.Read();
+           if(rdr.HasRows) // Vérifie si il y a eu une réponse valide pour la recherche du nom entré, signifiant que le nom est déjà utilisé pour un autre compte
+            {
+                _errortxt.text = "Name already taken";
+                rdr.Close();
+                return;
+            }
+           else // Nom non utilisé donc création de compte
+            {
+                rdr.Close();
+                cmd = new MySqlCommand("INSERT INTO users VALUES(default,'" + name + "','" + pass + "',default, default)", con);
+                try
+                {
+                    rdr = cmd.ExecuteReader();
+                }
+                catch (Exception e)
+                {
+                    Debug.Log(e);
+                }
+                rdr.Close();
+                Debug.Log("Created account : " + name + " | Password : " + pass);
+                myUserName = name;
 
-            //test
-            _errortxt.text = "Created account : " + userName + " | Password : " + userPass;
-            ShowHideCreateUserGUI();
-            ShowHideConnectUserGUI();
+                //test
+                _errortxt.text = "Created account : " + name + " | Password : " + pass;
+                ShowHideCreateUserGUI();
+                ShowHideConnectUserGUI();
+            }
+
+            
         }
         else
         {
